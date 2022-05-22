@@ -2,16 +2,19 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Lighthouse {
     /** ---------------------Lighthouse Declarations------------------------- */
     IERC20 public _acceptedToken; // accepted token contract
+    IERC721 _acceptedNFT; // accepted NFT contract
     struct Bookings {
         uint256 checkinTime;
         uint256 checkoutTime;
         address tenant;
     }
     struct Apartment {
+        uint256 id;
         uint256 costPerNight;
         uint256 checkinTime;
         uint256 checkoutTime;
@@ -44,9 +47,11 @@ contract Lighthouse {
     /** ---------------------Constructor------------------------- */
 
     constructor(
-        IERC20 acceptedToken
+        IERC20 acceptedToken,
+        IERC721 acceptedNFT
         ) {
             _acceptedToken = acceptedToken;
+            _acceptedNFT = acceptedNFT;
     }
 
     /** ---------------------Write Functions------------------------- */
@@ -57,23 +62,27 @@ contract Lighthouse {
     **/
     function registerApartment(
         uint256 costPerNight,
-        address landlord
+        uint256 tokenId
     ) public {
+        require(_acceptedNFT.ownerOf(tokenId) == msg.sender, "You are not the owner of this NFT");
+       _acceptedNFT.safeTransferFrom(msg.sender, address(this), tokenId);
+
         uint256 totalApartments = listedApartments;
         listedApartments++;
         
         apartments[totalApartments] = Apartment(
+            tokenId,
             costPerNight,
             0,
             0,
             0,
-            landlord,
+            msg.sender,
             address(0)
         );
-        (users[landlord].apartmentNumber).push(totalApartments);
-        if (users[landlord].typeofUser == 0) {
-            users[landlord] = Users (
-                users[landlord].apartmentNumber,
+        (users[msg.sender].apartmentNumber).push(totalApartments);
+        if (users[msg.sender].typeofUser == 0) {
+            users[msg.sender] = Users (
+                users[msg.sender].apartmentNumber,
                 0,
                 block.timestamp,
                 1,
@@ -86,6 +95,7 @@ contract Lighthouse {
         uint256 apartmentNumber,
         uint256 checkoutTime
     ) {
+        require(apartments[apartmentNumber].landlord != address(0), "Unlisted apartment");
         require(apartments[apartmentNumber].landlord != msg.sender, "You are the owner");
         require(apartments[apartmentNumber].checkoutTime <= block.timestamp, "Apartment is not available");
 
@@ -120,6 +130,22 @@ contract Lighthouse {
         require(users[msg.sender].earnings >= amount, "You don't have enough earnings");
 
         _acceptedToken.transfer(msg.sender, amount);
+    }
+
+    function unListApartment(uint256 apartmentId) public {
+        require(apartments[apartmentId].landlord == msg.sender, "You are not the owner");
+        require(apartments[apartmentId].tenant == address(0), "Apartment is not available");
+
+        apartments[apartmentId] = Apartment(
+            apartments[apartmentId].id,
+            0,
+            0,
+            0,
+            0,
+            address(0),
+            address(0)
+        );
+        _acceptedNFT.safeTransferFrom(address(this), msg.sender, apartments[apartmentId].id);
     }
 
     /**---------------------------------Loan-------------------------------- */
@@ -182,7 +208,7 @@ contract Lighthouse {
 
     function completeLoan() public {
         require(users[msg.sender].loan.ending <= block.timestamp, "Payment duration not completed");
-        require(users[msg.sender].loan.ownership != 100, "You don't have a loan");
+        require(users[msg.sender].loan.ownership != 100 || users[msg.sender].loan.ownership != 0, "You don't have a loan");
 
         users[msg.sender].loan = Loan (
             100,
@@ -211,5 +237,20 @@ contract Lighthouse {
 
     function getLoan() public view returns(Loan memory) {
         return users[msg.sender].loan;
+    }
+
+    function getLiquidity(address landlord) public view returns(uint256) {
+        return liquidity.providers[landlord];
+    }
+
+    function getProfit(address provider) public view returns(uint256) {
+        uint256 ProvidedLiquidity = liquidity.providers[provider];
+        uint256 shares = (ProvidedLiquidity * 100)/liquidity.totalLiquidity;
+
+        return (shares * liquidity.Gains)/100;
+    }
+
+    function getEarnings(address landloard) public view returns(uint256) {
+        return users[landloard].earnings;
     }
 }

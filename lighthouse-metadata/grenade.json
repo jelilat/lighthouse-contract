@@ -1,0 +1,12 @@
+{
+    "attributes": [
+      {
+        "trait_type": "Color",
+        "value": "Red"
+      }
+    ],
+    "description": "In-game grenade.",
+    "image": "https://gateway.pinata.cloud/ipfs/QmWpQPw5Gz4p44euNhcazdhxRoousp5yCMfFopXTobnhbZ/grenade.png",
+    "name": "grenade"
+  }
+  

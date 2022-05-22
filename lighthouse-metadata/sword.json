@@ -1,0 +1,12 @@
+{
+    "attributes": [
+      {
+        "trait_type": "Color",
+        "value": "Orange"
+      }
+    ],
+    "description": "In-game Sword.",
+    "image": "https://gateway.pinata.cloud/ipfs/QmWpQPw5Gz4p44euNhcazdhxRoousp5yCMfFopXTobnhbZ/sword.png",
+    "name": "Sword"
+  }
+  

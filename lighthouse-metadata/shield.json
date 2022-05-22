@@ -1,0 +1,12 @@
+{
+    "attributes": [
+      {
+        "trait_type": "Color",
+        "value": "Red"
+      }
+    ],
+    "description": "In-game Shield.",
+    "image": "https://gateway.pinata.cloud/ipfs/QmWpQPw5Gz4p44euNhcazdhxRoousp5yCMfFopXTobnhbZ/shield.png",
+    "name": "Shield"
+  }
+  
